@@ -1,5 +1,18 @@
+export {generateFormField, generateSelect, presentProjectList, presentProject, presentTodoList, addToContainer};
 
-export {generateFormField, generateSelect, presentProjectList};
+//school - yellow #e6fc67
+//work - red - #fc6e67
+//home - blue - #67e8fc
+//social - pink - #fc67b6
+//recreation - orange - #fc9167
+//finance - green - #67fc94
+//personal - purple - #aa67fc
+//other
+
+function addToContainer(container, elements) {
+    for (var i = 0; i < elements.length; i++)
+        container.appendChild(elements[i]);
+}
 
 //additional can be used for things like innerHTML of a button, placeholders in text fields, etc
 function generateFormField (id, fieldType, labelWord = '', additional = '') {
@@ -65,10 +78,104 @@ function generateSelect( id, values, labels ) {
 }
 
 function presentProjectList( content, projects ) {
+
+    var count = 0;
+
+    var header = document.createElement('h2');
+    header.innerHTML = 'Projects';
+    content.appendChild(header);
+    count++;
+
     for (var i = 0; i < projects.length; i++) {
         var projectBlock = document.createElement('div');
-	projectBlock.style.cssText = 'border: solid black 2px';
-	projectBlock.innerHTML = projects[i].title;
+	projectBlock.style.cssText = 'background-color: #606060; margin-bottom: 20px; style: inline-block; height: 20px; width: 300px;';
+	projectBlock.innerHTML = projects[i].title + ' ' + projects[i].desc + ' ' + projects[i].date;
 	content.appendChild(projectBlock);
     }
+
+    return count;
+}
+
+function presentProject(project) {
+    var content = document.getElementById('content');
+    content.innerHTML = '';
+    console.log('clicked on ' + project.title);
+    
+    var header = document.createElement('h2');
+    header.innerHTML = project.title;
+    content.appendChild(header);
+
+    var desc = document.createElement('h3');
+    desc.innerHTML = project.desc;
+    content.append(desc);
+
+    content.append(createNotebox(project.notes));
+    
+}
+
+function createNotebox(notes) {
+   var notepad = document.createElement('div');
+   notepad.style.cssText = 'top: 0; right: 0; height: 100%; margin: 0px; padding: 0px;' + 
+		' display: block; float: right; position: fixed; background-color: rgb(96, 96, 96);'; 
+
+   var header = document.createElement('h3');
+   header.innerHTML = 'Notes';
+   notepad.appendChild(header);
+
+   var showNotes = document.createElement('p');
+   showNotes.innerHTML = notes;
+   notepad.appendChild(showNotes);
+
+   var editNoteField = document.createElement('textArea');
+   notepad.appendChild(editNoteField);
+
+   var editButton = document.createElement('button');
+   editButton.innerHTML = 'Edit';
+   notepad.appendChild(editButton);
+
+   return notepad;
+}
+
+function presentTodoList (todoList) {
+    var content = document.getElementById('content');
+    var details = [];
+
+    var completeButtons = [];
+
+    for (var i = 0; i < todoList.length; i++) {
+        var todoItem = document.createElement('div');
+	todoItem.innerHTML = (i+1) + '. ' + todoList[i].task;
+
+	if (todoList[i].getIsDone())
+	    todoItem.style.textDecoration = 'line-through';
+
+	var completed = document.createElement('button');
+	completed.innerHTML = 'Done';
+	completed.addEventListener('click', () => {
+            todoItem.style.textDecoration = 'line-through';
+	    todoItem.firstElementChild.style.textDecoration = 'none!important';
+	});
+	todoItem.appendChild(completed);
+
+	var todoDetails = document.createElement('h5');
+	todoDetails.innerHTML = 'Details: ' + todoList[i].details;
+	todoDetails.style.textDecoration = 'none';
+	todoDetails.style.display = 'none';
+	todoItem.appendChild(todoDetails);
+
+	details.push(todoDetails);
+
+	const index = i;
+	todoItem.onmouseover = function() {
+	    details[index].style.display = 'block';
+	}
+
+	todoItem.onmouseout = function() {
+	    details[index].style.display = 'none';
+	}
+        content.appendChild(todoItem);
+	completeButtons.push(completed);
+    }
+
+    return completeButtons;
 }
