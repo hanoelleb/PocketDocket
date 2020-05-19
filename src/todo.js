@@ -7,9 +7,7 @@ const todoFactory = (task, isDone, details='') => {
     }
 
     const setIsDone = ( done )  => {
-	console.log('before: ' + isDone);
         isDone = done;
-	console.log('after: ' + isDone);
     }
 
     const getIsDone = () => {

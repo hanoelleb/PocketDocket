@@ -89,7 +89,18 @@ function presentProjectList( content, projects ) {
     for (var i = 0; i < projects.length; i++) {
         var projectBlock = document.createElement('div');
 	projectBlock.style.cssText = 'background-color: #606060; margin-bottom: 20px; style: inline-block; height: 20px; width: 300px;';
-	projectBlock.innerHTML = projects[i].title + ' ' + projects[i].desc + ' ' + projects[i].date;
+	//projectBlock.innerHTML = projects[i].title + ' ' + projects[i].date;
+
+        var projectTitle = document.createElement('span');
+	projectTitle.innerHTML = projects[i].title;
+	projectTitle.style.cssFloat = 'left';
+	projectBlock.appendChild(projectTitle);
+
+        var projectDate = document.createElement('span');
+        projectDate.innerHTML = projects[i].date;
+	projectDate.style.cssFloat = 'right';
+        projectBlock.appendChild(projectDate);
+
 	content.appendChild(projectBlock);
     }
 
@@ -138,12 +149,17 @@ function createNotebox(notes) {
 
 function presentTodoList (todoList) {
     var content = document.getElementById('content');
+    
     var details = [];
 
+    var todoItems = [];
+
     var completeButtons = [];
+    var removeButtons = [];
 
     for (var i = 0; i < todoList.length; i++) {
         var todoItem = document.createElement('div');
+	todoItems.push(todoItem);
 	todoItem.innerHTML = (i+1) + '. ' + todoList[i].task;
 
 	if (todoList[i].getIsDone())
@@ -151,11 +167,13 @@ function presentTodoList (todoList) {
 
 	var completed = document.createElement('button');
 	completed.innerHTML = 'Done';
-	completed.addEventListener('click', () => {
-            todoItem.style.textDecoration = 'line-through';
-	    todoItem.firstElementChild.style.textDecoration = 'none!important';
-	});
 	todoItem.appendChild(completed);
+
+	var remove = document.createElement('button');
+	remove.innerHTML = 'Remove';
+	todoItem.appendChild(remove);
+
+	removeButtons.push(remove);
 
 	var todoDetails = document.createElement('h5');
 	todoDetails.innerHTML = 'Details: ' + todoList[i].details;
@@ -173,9 +191,16 @@ function presentTodoList (todoList) {
 	todoItem.onmouseout = function() {
 	    details[index].style.display = 'none';
 	}
-        content.appendChild(todoItem);
+        //content.appendChild(todoItem);
+
+	completed.addEventListener('click', () => {
+            todoItems[index].style.textDecoration = 'line-through';
+            //todoItems[index].style.textDecoration = 'none!important';
+        });
 	completeButtons.push(completed);
+
+	content.appendChild(todoItem);
     }
 
-    return completeButtons;
+    return [completeButtons, removeButtons];
 }

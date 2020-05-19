@@ -1,6 +1,9 @@
 import { generateFormField, generateSelect, presentProjectList, presentProject, presentTodoList, addToContainer} from './DOM';
 import { projectFactory, projectRoster } from './project';
 
+
+//getroster causing issues? can only remove and complete tasks first time opening
+
 //school - yellow #e6fc67
 //work - red - #fc6e67
 //home - blue - #67e8fc
@@ -31,7 +34,7 @@ function initDocket() {
     content.style.cssText = 'padding: 20px; position: relative; left: 20%';
     document.body.appendChild(content);
 
-    //form: project title, due date, description, notes, priority, categories (school, work, home, 
+    //form: project title, due date, description, notes, priority, categories (school, work, home,
     //social, recreation, finance, personal, other)
 }
 
@@ -58,9 +61,9 @@ function setupNavbar() {
     }
 
     //all projects, this week, high priority in one nav tab. categories in the other
-    const categories = ['School', 'Work', 
+    const categories = ['School', 'Work',
 	    'Home', 'Social', 'Recreation', 'Finance', 'Personal', 'Other'];
- 
+
     for (var i = 0; i < categories.length; i++ ) {
         var category = document.createElement('li');
 	category.style.cssText = 'padding-left: 5px; padding-bottom: 5px; display: block, width: 60px;';
@@ -70,24 +73,24 @@ function setupNavbar() {
 	    var projects = projectRoster.getProjectsById(categories[index].toLowerCase());
 	    getSearchedProjectRoster(projects);
 	};
-	
+
 	var dot = document.createElement('span');
-	dot.style.cssText = 'position: relative; float: left; top: 50%; display: block; background-color: ' + colors[i] + '; border-radius: 50%; ' + 
+	dot.style.cssText = 'position: relative; float: left; top: 50%; display: block; background-color: ' + colors[i] + '; border-radius: 50%; ' +
                     'width : 10px; height : 10px; z-index: 1;';
         category.appendChild(dot);
 
 	categoryList.appendChild(category);
     }
-  
+
 }
 
 function makeProjectForm(content) {
-    
+
     var projectForm = document.createElement('form');
     content.appendChild(projectForm);
     projectForm.id = 'projectForm';
     projectForm.style.cssText = 'right: 35%; position: fixed; margin-left: auto; margin-right: auto;' +
-        'width: 300px; display: none; z-index: 5; font-family: Arial';
+        'width: 250px; display: none; z-index: 5; font-family: Arial';
 
     var title = generateFormField('title', 'text', 'Title: ', 'Project Name');
     addToContainer(projectForm, title);
@@ -162,7 +165,7 @@ function getProjectRoster() {
     var roster = projectRoster.getRoster();
 
     content.innerHTML = '';
-   
+
     makeProjectForm(content);
 
     //must add function to each project card which will start at content.children[j]
@@ -173,13 +176,33 @@ function getProjectRoster() {
         content.children[j].addEventListener('click', () => {
               presentProject(roster[index]);
 	      createTodoForm(content, roster[index]);
-	      addTodoButton(content);
-              presentTodoList(roster[index].getTodos());
-        } );
-	j++;
+              var todoListButtons = presentTodoList(roster[index].getTodos()); 
+              ///////ADD HERE///////////
+	      const currentProject = roster[index];
+              for (var i = 0; i < todoListButtons[0].length; i++) {
+                   const index = i;
+                   todoListButtons[0][i].addEventListener('click', () => {
+                   var todos = currentProject.getTodos();
+                           currentProject.markTodo(index);
+                   });
+               }
+               for (var i = 0; i < todoListButtons[1].length; i++) {
+                   const index = i;
+                   todoListButtons[1][i].addEventListener('click', () => {
+                   content.innerHTML = '';
+                   var todos = currentProject.getTodos();
+                   currentProject.removeTodo(index);
+                   //todoForm.style.display = 'none';
+                   updateTodoList(currentProject);
+           		//addTodoButton(content);
+                   });
+               }
+	       addTodoButton(content);
+	}); //end of addevent listener
     }
-
-    addFormButton(content);
+                   //addTodoButton(content);
+              //////////////////////// 
+       addFormButton(content);
 }
 
 function getSearchedProjectRoster( projects ) {
@@ -195,7 +218,29 @@ function getSearchedProjectRoster( projects ) {
               presentProject(projects[index]);
               createTodoForm(content, projects[index]);
               addTodoButton(content);
-              presentTodoList(projects[index].getTodos());
+              var todoListButtons = presentTodoList(projects[index].getTodos());
+
+	      //MAKE INTO SEPARATE FUNCTION
+	      for (var i = 0; i < todoListButtons[0].length; i++) {
+                  const index = i;
+                  todoListButtons[0][i].addEventListener('click', () => {
+                  var todos = currentProject.getTodos();
+                  currentProject.markTodo(index);
+                  });
+               }
+
+              for (var i = 0; i < todoListButtons[1].length; i++) {
+                  const index = i;
+                  todoListButtons[1][i].addEventListener('click', () => {
+                  content.innerHTML = '';
+                  var todos = currentProject.getTodos();
+                  currentProject.removeTodo(index);
+                  todoForm.style.display = 'none';
+                  updateTodoList(currentProject);
+                //addTodoButton(content);
+              });
+	      addTodoButton(content);
+        }
         } );
         j++;
     }
@@ -215,15 +260,12 @@ function addTodoButton (content) {
     content.appendChild(newProjectButton);
 }
 
-function createTodoForm(content, currentProject) {
-
-    console.log('the current project: ' + currentProject.title);
+function buildForm() {
 
     var todoForm = document.createElement('form');
     todoForm.id = 'todo';
     todoForm.style.cssText = 'right: 35%; position: fixed; margin-left: auto; margin-right: auto;' +
         'width: 300px; display: none; z-index: 5; font-family: Arial';
-    content.appendChild(todoForm);
 
     var desc = generateFormField('desc', 'text', 'Task: ');
     addToContainer(todoForm, desc);
@@ -234,6 +276,16 @@ function createTodoForm(content, currentProject) {
     var submit = generateFormField('todoSubmit', 'submit', 'Add Task');
     addToContainer(todoForm, submit);
 
+    return todoForm;
+}
+
+function createTodoForm(content, currentProject) {
+
+    console.log('the current project: ' + currentProject.title);
+
+    var todoForm = buildForm();
+    content.appendChild(todoForm);
+
     todoForm.onsubmit = function () {
         var content = document.getElementById('content');
         var form = content.childNodes.item('todo');
@@ -242,34 +294,72 @@ function createTodoForm(content, currentProject) {
         var desc = todoForm.childNodes[3].value;
 	currentProject.addTodoItem(task, false, desc);
 
-        console.log('get todos: ' + currentProject.getTodos()[0].task);
 	content.innerHTML = '';
 	presentProject(currentProject);
         createTodoForm(content, currentProject);
         var todoListButtons = presentTodoList(currentProject.getTodos());
 
-	for (var i = 0; i < todoListButtons.length; i++) {
+	//ISSUE MUST BE HERE??
+	//add functionality to all complete buttons
+	for (var i = 0; i < todoListButtons[0].length; i++) {
+            console.log('SHOULD BE ABLE TO COMPLETE');
 	    const index = i;
-	    todoListButtons[i].addEventListener('click', () => {
+	    todoListButtons[0][i].addEventListener('click', () => {
 	        var todos = currentProject.getTodos();
-		for (var j = 0; j < todos.length; j++) {
-		    console.log(todos[j].task + ' ' + todos[j].getIsDone());
-		}
-                console.log('------------------------------');
                 currentProject.markTodo(index);
-
-		var todos2 = currentProject.getTodos();
-                for (var j = 0; j < todos.length; j++) {
-                    console.log(todos2[j].task + ' ' + todos2[j].getIsDone());
-                }
-
 	    });
 	}
-	
+
+	for (var i = 0; i < todoListButtons[1].length; i++) {
+	    console.log('SHOULD BE ABLE TO DELETE');
+            const index = i;
+            todoListButtons[1][i].addEventListener('click', () => {
+		content.innerHTML = '';
+                var todos = currentProject.getTodos();
+		currentProject.removeTodo(index);
+                todoForm.style.display = 'none';
+		updateTodoList(currentProject);
+            });
+        }
+
 	addTodoButton(content);
 	todoForm.style.display = 'none';
-        return false; 
+        return false;
     };
+}
+
+function updateTodoList(currentProject) {
+        var content = document.getElementById('content');
+        content.innerHTML = '';
+
+	var todoForm = buildForm();
+        content.appendChild(todoForm);
+
+        presentProject(currentProject);
+        createTodoForm(content, currentProject);
+        var todoListButtons = presentTodoList(currentProject.getTodos());
+
+	 for (var i = 0; i < todoListButtons[0].length; i++) {
+            const index = i;
+            todoListButtons[0][i].addEventListener('click', () => {
+                var todos = currentProject.getTodos();
+                currentProject.markTodo(index);
+            });
+        }
+
+        for (var i = 0; i < todoListButtons[1].length; i++) {
+            const index = i;
+            todoListButtons[1][i].addEventListener('click', () => {
+                content.innerHTML = '';
+                var todos = currentProject.getTodos();
+                currentProject.removeTodo(index);
+                todoForm.style.display = 'none';
+                updateTodoList(currentProject);
+		//addTodoButton(content);
+            });
+        }
+
+        addTodoButton(content);
 }
 
 function test() {

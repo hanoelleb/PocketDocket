@@ -10,14 +10,16 @@ const projectFactory = (title, date, priority, category, completed, desc='', not
     };
 
     const markTodo = ( index ) => {
-	console.log('within markTodo: ' + todos[index].task + ' ' + todos[index].getIsDone());
         todos[index].setIsDone(true);
-	console.log('within markTodo after: ' + todos[index].task + ' ' + todos[index].getIsDone());
+    }
+
+    const removeTodo = ( index ) => {
+         todos.splice(index,1);
     }
 
     const getTodos = () => { return todos };
 
-    return {title, date, priority, category, completed, desc, notes, addTodoItem, getTodos, markTodo};
+    return {title, date, priority, category, completed, desc, notes, addTodoItem, getTodos, markTodo, removeTodo };
 }
 
 //module that contains all projects
