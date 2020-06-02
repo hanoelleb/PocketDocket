@@ -1,4 +1,4 @@
-export {generateFormField, generateSelect, presentProjectList, presentProject, presentTodoList, addToContainer};
+export {generateFormField, generateSelect, presentProjectList, presentProject, presentTodoList, buildTodoForm, addToContainer};
 
 //school - yellow #e6fc67
 //work - red - #fc6e67
@@ -89,7 +89,6 @@ function presentProjectList( content, projects ) {
     for (var i = 0; i < projects.length; i++) {
         var projectBlock = document.createElement('div');
 	projectBlock.style.cssText = 'background-color: #606060; margin-bottom: 20px; style: inline-block; height: 20px; width: 300px;';
-	//projectBlock.innerHTML = projects[i].title + ' ' + projects[i].date;
 
         var projectTitle = document.createElement('span');
 	projectTitle.innerHTML = projects[i].title;
@@ -120,8 +119,12 @@ function presentProject(project) {
     desc.innerHTML = project.desc;
     content.append(desc);
 
-    content.append(createNotebox(project.notes));
-    
+    var notebox = createNotebox(project.notes);
+    console.log(notebox);
+    content.append(notebox);
+
+    //need to return notebox to add functionality to submit button
+    return notebox;
 }
 
 function createNotebox(notes) {
@@ -138,10 +141,28 @@ function createNotebox(notes) {
    notepad.appendChild(showNotes);
 
    var editNoteField = document.createElement('textArea');
+   editNoteField.id = 'noteField';
+   editNoteField.style.cssText = 'display: none; clear: right;';
+   editNoteField.innerHTML = notes;
    notepad.appendChild(editNoteField);
-
+   
+   var submitChange = document.createElement('button');
+   submitChange.id = 'submitNote';
+   submitChange.innerHTML = 'Submit';
+   submitChange.style.display = 'none';
+   notepad.appendChild(submitChange);
+   /*submitChange.addEventListener('click', () => {
+       editNoteField.style.display = 'none';
+       submitChange.style.display = 'none';
+   });*/
+   
    var editButton = document.createElement('button');
+   editButton.id = 'editNote';
    editButton.innerHTML = 'Edit';
+   editButton.addEventListener('click', () => {
+       editNoteField.style.display = 'block';
+       submitChange.style.display = 'block';
+   });
    notepad.appendChild(editButton);
 
    return notepad;
@@ -156,7 +177,8 @@ function presentTodoList (todoList) {
 
     var completeButtons = [];
     var removeButtons = [];
-
+    var submitChangeButtons = [];
+    var detailFields = [];
     for (var i = 0; i < todoList.length; i++) {
         var todoItem = document.createElement('div');
 	todoItems.push(todoItem);
@@ -181,6 +203,28 @@ function presentTodoList (todoList) {
 	todoDetails.style.display = 'none';
 	todoItem.appendChild(todoDetails);
 
+	var editDetails = document.createElement('button');
+	editDetails.innerHTML = 'Edit';
+	todoDetails.appendChild(editDetails);
+
+	var submitDetails = document.createElement('button');
+	submitDetails.innerHTML = 'Submit';
+	submitDetails.style.display = 'none';
+	todoDetails.appendChild(submitDetails);
+        submitChangeButtons.push(submitDetails);
+
+	var editDetailField = document.createElement('textarea');
+	editDetailField.style.display = 'none';
+	editDetailField.innerHTML = todoList[i].details;
+        todoDetails.appendChild(editDetailField);
+        detailFields.push(editDetailField);
+
+	editDetails.addEventListener('click', () => {
+            submitDetails.style.display = 'inline';
+            editDetailField.style.display = 'inline';
+        });
+
+
 	details.push(todoDetails);
 
 	const index = i;
@@ -191,16 +235,34 @@ function presentTodoList (todoList) {
 	todoItem.onmouseout = function() {
 	    details[index].style.display = 'none';
 	}
-        //content.appendChild(todoItem);
-
+      
 	completed.addEventListener('click', () => {
             todoItems[index].style.textDecoration = 'line-through';
-            //todoItems[index].style.textDecoration = 'none!important';
         });
 	completeButtons.push(completed);
 
 	content.appendChild(todoItem);
     }
 
-    return [completeButtons, removeButtons];
+    return [completeButtons, removeButtons, submitChangeButtons, detailFields];
 }
+
+function buildTodoForm() {
+
+    var todoForm = document.createElement('form');
+    todoForm.id = 'todo';
+    todoForm.style.cssText = 'right: 35%; position: fixed; margin-left: auto; margin-right: auto;' +
+        'width: 300px; display: none; z-index: 5; font-family: Arial';
+
+    var desc = generateFormField('desc', 'text', 'Task: ');
+    addToContainer(todoForm, desc);
+
+    var details = generateFormField('details', 'textarea', 'Details (optional): ', 'Locations, needed contact info, etc.');
+    addToContainer(todoForm, details);
+
+    var submit = generateFormField('todoSubmit', 'submit', 'Add Task');
+    addToContainer(todoForm, submit);
+
+    return todoForm;
+}
+

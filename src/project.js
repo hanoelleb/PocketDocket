@@ -17,9 +17,13 @@ const projectFactory = (title, date, priority, category, completed, desc='', not
          todos.splice(index,1);
     }
 
+    const editTodoDetails = ( index, changes ) => {
+        todos[index].details = changes;
+    }
+
     const getTodos = () => { return todos };
 
-    return {title, date, priority, category, completed, desc, notes, addTodoItem, getTodos, markTodo, removeTodo };
+    return {title, date, priority, category, completed, desc, notes, addTodoItem, getTodos, markTodo, removeTodo, editTodoDetails };
 }
 
 //module that contains all projects

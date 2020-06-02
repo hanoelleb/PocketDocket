@@ -1,7 +1,5 @@
-import { generateFormField, generateSelect, presentProjectList, presentProject, presentTodoList, addToContainer} from './DOM';
 import { projectFactory, projectRoster } from './project';
-
-
+import {generateFormField, generateSelect, presentProjectList, presentProject, presentTodoList, buildTodoForm, addToContainer} from './DOM';
 //getroster causing issues? can only remove and complete tasks first time opening
 
 //school - yellow #e6fc67
@@ -12,6 +10,12 @@ import { projectFactory, projectRoster } from './project';
 //finance - green - #67fc94
 //personal - purple - #aa67fc
 //other
+
+let itemsArray = localStorage.getItem('items') ? JSON.parse(localStorage.getItem('items')) : [];
+
+//localStorage.setItem('items', JSON.stringify(itemsArray))
+//const data = JSON.parse(localStorage.getItem('items'))
+//console.log('data: ' + data);
 
 const colors = [
   '#e6fc67',
@@ -26,6 +30,11 @@ const colors = [
 function initDocket() {
 
     document.body.style.cssText = 'background-color: #111111; color: #fcfcfc; font-family: Arial;';
+
+    var title = document.createElement('h1');
+    title.style.cssText = 'left: 15%; top: -5%; position: absolute; z-index: 5; color: #e6ffff';
+    title.innerHTML = 'PocketDocket';
+    document.body.appendChild(title);
 
     setupNavbar();
 
@@ -134,16 +143,6 @@ function submitForm(element) {
     var content = document.getElementById('content');
     var form = content.childNodes.item('projectForm');
 
-    /*
-     * children
-     * 1 - title
-     * 3 - date
-     * 5 - desc
-     * 7 - notes
-     * 9 - priority
-     * 11 - category
-     */
-
     var title = form.childNodes[1].value;
     var date = form.childNodes[3].value;
     var desc = form.childNodes[5].value;
@@ -153,6 +152,10 @@ function submitForm(element) {
 
     var newProj = projectFactory(title, date, priority, category, false, desc, notes);
     projectRoster.addToRoster(newProj);
+
+    itemsArray = projectRoster;
+    localStorage.setItem('items', JSON.stringify(itemsArray));
+    console.log('items: ' + itemsArray);
     getProjectRoster();
 
     form.style.display = 'none';
@@ -174,34 +177,22 @@ function getProjectRoster() {
     for (var i = 0; i < roster.length; i++) {
         const index = i;
         content.children[j].addEventListener('click', () => {
-              presentProject(roster[index]);
+              var notebox = presentProject(roster[index]);
 	      createTodoForm(content, roster[index]);
+
               var todoListButtons = presentTodoList(roster[index].getTodos()); 
-              ///////ADD HERE///////////
 	      const currentProject = roster[index];
-              for (var i = 0; i < todoListButtons[0].length; i++) {
-                   const index = i;
-                   todoListButtons[0][i].addEventListener('click', () => {
-                   var todos = currentProject.getTodos();
-                           currentProject.markTodo(index);
-                   });
-               }
-               for (var i = 0; i < todoListButtons[1].length; i++) {
-                   const index = i;
-                   todoListButtons[1][i].addEventListener('click', () => {
-                   content.innerHTML = '';
-                   var todos = currentProject.getTodos();
-                   currentProject.removeTodo(index);
-                   //todoForm.style.display = 'none';
-                   updateTodoList(currentProject);
-           		//addTodoButton(content);
-                   });
-               }
-	       addTodoButton(content);
-	}); //end of addevent listener
-    }
-                   //addTodoButton(content);
-              //////////////////////// 
+
+              addNotesChangeFunctionality(notebox, currentProject);		
+
+              addCheckFunctionality(todoListButtons[0], currentProject);
+              addRemoveFunctionality(todoListButtons[1], currentProject);
+	      addDetailChangeFunctionality(todoListButtons[2], todoListButtons[3], currentProject);
+
+              addTodoButton(content);
+	});
+	j++;
+    } 
        addFormButton(content);
 }
 
@@ -217,34 +208,16 @@ function getSearchedProjectRoster( projects ) {
         content.children[j].addEventListener('click', () => {
               presentProject(projects[index]);
               createTodoForm(content, projects[index]);
-              addTodoButton(content);
+
               var todoListButtons = presentTodoList(projects[index].getTodos());
+	      var currentProject = projects[index];
+	      addCheckFunctionality(todoListButtons[0], currentProject);
+              addRemoveFunctionality(todoListButtons[1], currentProject);
 
-	      //MAKE INTO SEPARATE FUNCTION
-	      for (var i = 0; i < todoListButtons[0].length; i++) {
-                  const index = i;
-                  todoListButtons[0][i].addEventListener('click', () => {
-                  var todos = currentProject.getTodos();
-                  currentProject.markTodo(index);
-                  });
-               }
-
-              for (var i = 0; i < todoListButtons[1].length; i++) {
-                  const index = i;
-                  todoListButtons[1][i].addEventListener('click', () => {
-                  content.innerHTML = '';
-                  var todos = currentProject.getTodos();
-                  currentProject.removeTodo(index);
-                  todoForm.style.display = 'none';
-                  updateTodoList(currentProject);
-                //addTodoButton(content);
-              });
 	      addTodoButton(content);
-        }
-        } );
+        });
         j++;
     }
-
     addFormButton(content);
 }
 
@@ -260,30 +233,9 @@ function addTodoButton (content) {
     content.appendChild(newProjectButton);
 }
 
-function buildForm() {
-
-    var todoForm = document.createElement('form');
-    todoForm.id = 'todo';
-    todoForm.style.cssText = 'right: 35%; position: fixed; margin-left: auto; margin-right: auto;' +
-        'width: 300px; display: none; z-index: 5; font-family: Arial';
-
-    var desc = generateFormField('desc', 'text', 'Task: ');
-    addToContainer(todoForm, desc);
-
-    var details = generateFormField('details', 'textarea', 'Details (optional): ', 'Locations, needed contact info, etc.');
-    addToContainer(todoForm, details);
-
-    var submit = generateFormField('todoSubmit', 'submit', 'Add Task');
-    addToContainer(todoForm, submit);
-
-    return todoForm;
-}
-
 function createTodoForm(content, currentProject) {
 
-    console.log('the current project: ' + currentProject.title);
-
-    var todoForm = buildForm();
+    var todoForm = buildTodoForm();
     content.appendChild(todoForm);
 
     todoForm.onsubmit = function () {
@@ -301,29 +253,16 @@ function createTodoForm(content, currentProject) {
 
 	//ISSUE MUST BE HERE??
 	//add functionality to all complete buttons
-	for (var i = 0; i < todoListButtons[0].length; i++) {
-            console.log('SHOULD BE ABLE TO COMPLETE');
-	    const index = i;
-	    todoListButtons[0][i].addEventListener('click', () => {
-	        var todos = currentProject.getTodos();
-                currentProject.markTodo(index);
-	    });
-	}
-
-	for (var i = 0; i < todoListButtons[1].length; i++) {
-	    console.log('SHOULD BE ABLE TO DELETE');
-            const index = i;
-            todoListButtons[1][i].addEventListener('click', () => {
-		content.innerHTML = '';
-                var todos = currentProject.getTodos();
-		currentProject.removeTodo(index);
-                todoForm.style.display = 'none';
-		updateTodoList(currentProject);
-            });
-        }
+	    //
+	addCheckFunctionality(todoListButtons[0], currentProject);
+	addRemoveFunctionality(todoListButtons[1], currentProject);
+	addDetailChangeFunctionality(todoListButtons[2], todoListButtons[3], currentProject);
 
 	addTodoButton(content);
 	todoForm.style.display = 'none';
+
+	itemsArray = projectRoster;
+        localStorage.setItem('items', JSON.stringify(itemsArray));
         return false;
     };
 }
@@ -332,42 +271,107 @@ function updateTodoList(currentProject) {
         var content = document.getElementById('content');
         content.innerHTML = '';
 
-	var todoForm = buildForm();
+	var todoForm = buildTodoForm();
         content.appendChild(todoForm);
 
         presentProject(currentProject);
         createTodoForm(content, currentProject);
         var todoListButtons = presentTodoList(currentProject.getTodos());
 
-	 for (var i = 0; i < todoListButtons[0].length; i++) {
-            const index = i;
-            todoListButtons[0][i].addEventListener('click', () => {
-                var todos = currentProject.getTodos();
-                currentProject.markTodo(index);
-            });
-        }
-
-        for (var i = 0; i < todoListButtons[1].length; i++) {
-            const index = i;
-            todoListButtons[1][i].addEventListener('click', () => {
-                content.innerHTML = '';
-                var todos = currentProject.getTodos();
-                currentProject.removeTodo(index);
-                todoForm.style.display = 'none';
-                updateTodoList(currentProject);
-		//addTodoButton(content);
-            });
-        }
-
-        addTodoButton(content);
+	addCheckFunctionality(todoListButtons[0], currentProject);
+        addRemoveFunctionality(todoListButtons[1], currentProject);
+        addDetailChangeFunctionality(todoListButtons[2], todoListButtons[3], currentProject);
+        
+	addTodoButton(content);
 }
 
 function test() {
     var tester = document.createElement('h1');
     tester.innerHTML = 'PocketDocket';
-    document.body.appendChild(tester);
+    document.body.append(tester);
+}
+
+//Given a list of html buttons, add the functionality to modify (check complete, delete)
+//the todo within the project
+function addCheckFunctionality(buttons, project) {
+     for (var i = 0; i < buttons.length; i++) {
+            const index = i;
+            buttons[i].addEventListener('click', () => {
+                var todos = project.getTodos();
+                project.markTodo(index);
+
+		itemsArray = projectRoster;
+                localStorage.setItem('items', JSON.stringify(itemsArray));
+            });
+        }
+
+    itemsArray = projectRoster;
+    localStorage.setItem('items', JSON.stringify(itemsArray));
+}
+
+function addRemoveFunctionality(buttons, project) {
+        for (var i = 0; i < buttons.length; i++) {
+            const index = i;
+            buttons[i].addEventListener('click', () => {
+		var content = document.getElementById('content');
+                content.innerHTML = '';
+                var todos = project.getTodos();
+                project.removeTodo(index);
+                updateTodoList(project);
+
+		itemsArray = projectRoster;
+                localStorage.setItem('items', JSON.stringify(itemsArray));
+            });
+        }
+}
+
+function addDetailChangeFunctionality(buttons, changes, project) { 
+     for (var i = 0; i < buttons.length; i++) {
+            const index = i;
+            buttons[i].addEventListener('click', () => {
+		//project.editTodoDetails(index, changes[index].value);
+		var content = document.getElementById('content');
+                content.innerHTML = '';
+                project.editTodoDetails(index, changes[index].value);
+		console.log('changes: ' + changes[index].value);
+                updateTodoList(project);
+
+		itemsArray = projectRoster;
+                localStorage.setItem('items', JSON.stringify(itemsArray));
+            });
+     }
+    //project.editTodoDetails(index, details);
+}
+
+function addNotesChangeFunctionality(notebox, project) {
+    var submit = notebox.childNodes[3];
+    console.log('submit: ' + submit.innerHTML);
+
+    submit.addEventListener('click', () => {
+	var changes = notebox.childNodes[2].value;
+	console.log('changes: ' + changes);
+        project.notes = changes;
+        var content = document.getElementById('content');
+        content.innerHTML = '';
+        presentProject(project);
+	createTodoForm(content, project);
+        var todoListButtons = presentTodoList(project.getTodos());
+
+        addCheckFunctionality(todoListButtons[0], project);
+        addRemoveFunctionality(todoListButtons[1], project);
+
+        addTodoButton(content);
+
+        itemsArray = projectRoster;
+        localStorage.setItem('items', JSON.stringify(itemsArray));
+    });
 }
 
 //test();
+
+for (var i = 0; i < itemsArray.length; i++ ) {
+    projectRoster.addToRoster(itemsArray[i]);
+}
+
 initDocket();
 getProjectRoster();
